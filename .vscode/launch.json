@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Arquivo Atual",
+            "name": "Cliente",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "client.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
@@ -16,7 +16,7 @@
             "name": "Server",
             "type": "python",
             "request": "launch",
-            "program": "server/multiconn-server.py",
+            "program": "multiconn-server.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["127.0.0.1", "65432"]

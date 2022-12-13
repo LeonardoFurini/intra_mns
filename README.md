@@ -23,3 +23,4 @@ pip install -r requirements.txt
 ```
 ## Links úteis
 https://iq-inc.com/importerror-attempted-relative-import/
+https://realpython.com/python-sockets/

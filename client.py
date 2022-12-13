@@ -5,6 +5,7 @@ import json
 from dataclasses import dataclass
 from utils.constants import Operations
 from conn_parser import ConnParser
+import names
 
 
 @dataclass
@@ -46,34 +47,40 @@ class serverConnection:
         return self.read_message()
 
 
-def input_params():
-    pass
+# TODO: Colocar em um arquivo comum
+def create_request(operation: Operations, users: list[tuple[str, str]] = None, payload: str = None) -> dict:
+    return json.dumps({
+        "operation": Operations.list_user.value, 
+        "users": users, 
+        "payload": payload
+    })
 
 if __name__ == "__main__":
     print(f"Digite seu usuário:")
     #name_user = input()
-    name_user = 'ze'
+    name_user = names.get_first_name()
+    print(name_user)
     print(f"Conectando ao servidor...")
     try:
         con = serverConnection()
         con.connect_server(name_user)
-        print(con.read_message())
-        # Listando os usuários disponíveis
-        con.list_online_user()
-        user_list = ConnParser.decode_payload(bytes(resp, 'utf-8'))
-
+        #print(con.read_message())
     except:
         print(f"Falha ao conectar no servidor")
     
     while True:        
-        print(f"Operação:\n\t(1) - Listar usuários diponíveis\n\t(2) - Enviar mensagem")
-        action = input()
-        if int(action) in [member.value for member in Operations]:
-            con = serverConnection()
-            if int(action) == Operations.list_user.value:
-                print(f"Solicitando usuários disponíveis...")
-                resp = con.request_online_users()
-                user_list = ConnParser.decode_payload(bytes(resp, 'utf-8'))
-            elif action == Operations.send_message:
-                user_input = input()
-                con.send_message(user_input)
+        print(f"Escolha um usuário:\n")
+        destiny = input()
+        print(f"Mensagem:\n")
+        message = input()
+
+        req = create_request(operation=Operations.send_message, users=destiny, payload=message)
+        con.send_message(req)
+        #if int(action) in [member.value for member in Operations]:
+        #    con = serverConnection()
+        #    if int(action) == Operations.list_user.value:
+        #        #print(f"Solicitando usuários disponíveis...")
+        #        #resp = con.request_online_users()
+        #        #user_list = ConnParser.decode_payload(bytes(resp, 'utf-8'))
+        #        pass
+        #    elif action == Operations.send_message:

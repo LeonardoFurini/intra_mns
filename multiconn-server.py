@@ -12,7 +12,6 @@ from utils.constants import Operations
 # Apelido para a implementação mais eficiente disponível na plataforma atual: essa deve ser a escolha padrão para a maioria dos usuários.
 sel = selectors.DefaultSelector()
 
-
 online_users = []
 
 @dataclass
@@ -25,18 +24,48 @@ class ServerClient():
 def on_user_msg(name: str):
     return f"O usuário {name} está online!"
 
-def create_request(operation: Operations, users: list[tuple[str, str]] = None, payload: str = None) -> dict:
+def create_request(operation: Operations, users: list[tuple[str, str]] = None, payload: str = None, origin: str = None) -> dict:
     return json.dumps({
-        "operation": Operations.list_user.value, 
+        "operation": operation.value, 
         "users": users, 
+        "origin": origin,
         "payload": payload
     })
     
-def notify_all_users(message: str):
+def notify_all_users(message: str, users, op:Operations):
     for client in online_users:
-        soc = client.sock.fileobj
-        req = create_request(operation=Operations.create_user, users=client.name, payload=message)
+        #soc = client.sock.fileobj
+        soc = client.sock
+        req = create_request(operation=op, users=users, payload=message)
         soc.send(bytes(req, 'utf-8'))
+
+def list_online_users() -> str:
+    """Lista o nome de todos os usuários disponíveis"""
+    users = []
+    for client in online_users:
+        users.append(client.name)
+    return users
+
+def create_new_user(sock, data, name):
+    # Adiciona o novo usuário
+    online_users.append(ServerClient(name=name, ip=data.addr[0], port=data.addr[1], sock=sock))
+    print(f"Usuário {name} cadastrado!!")
+    # Envia uma mensagem notificando todos os usuários
+    notify_all_users(on_user_msg(name), users=[name], op=Operations.new_user)
+    # Envia a lista de todos usuários disponíveis para o novo usuário
+    req = create_request(operation=Operations.list_user, users=list_online_users())
+    sock.send(str.encode(req))
+
+def send_message_for_user_list(users, msg, origin):
+    for user in users:
+        for i in online_users:
+            if i.name == user:
+                # O usuário realmente está online
+                req = create_request(operation=Operations.send_message, users=[user], payload=msg, origin=origin)
+                i.sock.send(str.encode(req))
+                break
+        print(f"O usuário {user} não está disponível")
+    pass
 
 
 def string_to_dict(pld: str) -> dict:
@@ -81,21 +110,21 @@ def service_connection(key, mask):
             parsed_payload = string_to_dict((data.outb).decode("utf-8"))
             
             if parsed_payload['operation'] == Operations.list_user.value:
-                clients = []
-                for i in range(len(events)):
-                    clients.append(events[i][0].data.addr)
-                req = create_request(operation=Operations.list_user, users=clients)
-                sent = sock.send(bytes(req, 'utf-8'))  # Should be ready to write
-            elif parsed_payload['operation'] == Operations.send_message.value:
-                print("Enviar mensagem para usuários específicos!")
+                #clients = []
+                #for i in range(len(events)):
+                #    clients.append(events[i][0].data.addr)
+                #req = create_request(operation=Operations.list_user, users=clients)
+                #sent = sock.send(bytes(req, 'utf-8'))  # Should be ready to write
                 pass
+
+            elif parsed_payload['operation'] == Operations.send_message.value:
+                send_message_for_user_list(msg=parsed_payload['payload'], users=parsed_payload['users'], origin=parsed_payload['origin'])
+            
             elif parsed_payload['operation'] == Operations.create_user.value:
-                online_users.append(ServerClient(name=parsed_payload['payload'], ip=data.addr[0], port=data.addr[1], sock=key))
-                print("Cadastrado com sucesso!!")
-                #req = create_request(operation=Operations.create_user, payload=on_user_msg(parsed_payload['payload']))
-                # Devo notificar todos os usuários que esta pessoa esta online
-                notify_all_users(on_user_msg(parsed_payload['payload']))
-            data.outb = ''
+                """Caso vá cadastrar um usuário"""
+                create_new_user(sock, data, parsed_payload['payload'])
+
+            data.outb = bytes([])
             #data.outb = data.outb[sent:]
 
 

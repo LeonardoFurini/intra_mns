@@ -6,8 +6,8 @@ import selectors
 import types
 import json
 from dataclasses import dataclass
-from typing import Optional
 from utils.constants import Operations
+from conn_parser import ConnParser
 
 # Apelido para a implementação mais eficiente disponível na plataforma atual: essa deve ser a escolha padrão para a maioria dos usuários.
 sel = selectors.DefaultSelector()
@@ -23,20 +23,12 @@ class ServerClient():
 
 def on_user_msg(name: str):
     return f"O usuário {name} está online!"
-
-def create_request(operation: Operations, users: list[tuple[str, str]] = None, payload: str = None, origin: str = None) -> dict:
-    return json.dumps({
-        "operation": operation.value, 
-        "users": users, 
-        "origin": origin,
-        "payload": payload
-    })
-    
+   
 def notify_all_users(message: str, users, op:Operations):
     for client in online_users:
         #soc = client.sock.fileobj
         soc = client.sock
-        req = create_request(operation=op, users=users, payload=message)
+        req = ConnParser.create_request(operation=op, users=users, payload=message)
         soc.send(bytes(req, 'utf-8'))
 
 def list_online_users() -> str:
@@ -53,7 +45,7 @@ def create_new_user(sock, data, name):
     # Envia uma mensagem notificando todos os usuários
     notify_all_users(on_user_msg(name), users=[name], op=Operations.new_user)
     # Envia a lista de todos usuários disponíveis para o novo usuário
-    req = create_request(operation=Operations.list_user, users=list_online_users())
+    req = ConnParser.create_request(operation=Operations.list_user, users=list_online_users())
     sock.send(str.encode(req))
 
 def send_message_for_user_list(users, msg, origin):
@@ -61,7 +53,7 @@ def send_message_for_user_list(users, msg, origin):
         for i in online_users:
             if i.name == user:
                 # O usuário realmente está online
-                req = create_request(operation=Operations.send_message, users=[user], payload=msg, origin=origin)
+                req = ConnParser.create_request(operation=Operations.send_message, users=[user], payload=msg, origin=origin)
                 i.sock.send(str.encode(req))
                 break
         print(f"O usuário {user} não está disponível")
@@ -110,11 +102,6 @@ def service_connection(key, mask):
             parsed_payload = string_to_dict((data.outb).decode("utf-8"))
             
             if parsed_payload['operation'] == Operations.list_user.value:
-                #clients = []
-                #for i in range(len(events)):
-                #    clients.append(events[i][0].data.addr)
-                #req = create_request(operation=Operations.list_user, users=clients)
-                #sent = sock.send(bytes(req, 'utf-8'))  # Should be ready to write
                 pass
 
             elif parsed_payload['operation'] == Operations.send_message.value:

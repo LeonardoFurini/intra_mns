@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+from pathlib import Path
+from PySide6.QtCore import QObject, Slot
+from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtGui import QGuiApplication
 
-import sys
+# =================
 import socket
 import selectors
 import types
@@ -10,6 +14,21 @@ from utils.constants import Operations
 from conn_parser import ConnParser
 import threading
 
+status = False
+
+class Ponte(QObject):
+    @Slot(str, result=list)
+    def fetch_image(self, pokemon_id):
+        pass
+
+    @Slot(str, result=list)
+    def connect_to_server(nome, server, port):
+        name_user = names.get_first_name()
+        start_connections(server, int(port), nome)
+        main_loop()
+        pass
+
+# Captura do teclado sem bloqueio
 class KeyboardThread(threading.Thread):
 
     def __init__(self, input_cbk = None, name='keyboard-input-thread'):
@@ -21,8 +40,6 @@ class KeyboardThread(threading.Thread):
         while True:
             self.input_cbk(input()) #waits to get input + Return
 
-showcounter = 0 #something to demonstrate the change
-
 def my_callback(inp):
     txt_to_send = input('Digite a mensagem:')
     sock = key.fileobj
@@ -31,7 +48,7 @@ def my_callback(inp):
 
 #start the Keyboard thread
 kthread = KeyboardThread(my_callback)
-
+#=========================================================================
 
 sel = selectors.DefaultSelector()
 
@@ -98,21 +115,30 @@ def service_connection(key, mask):
 #    print(f"Usage: {sys.argv[0]} <host> <port> <num_connections>")
 #    sys.exit(1)
 
-host = "127.0.0.1"
-port = 65432
-name_user = names.get_first_name()
-start_connections(host, int(port), name_user)
+def main_loop():
+    try:
+        while True:
+            events = sel.select(timeout=1)
+            if events:
+                for key, mask in events:
+                    service_connection(key, mask)
+            # Check for a socket being monitored to continue.
+            if not sel.get_map():
+                break
+    except KeyboardInterrupt:
+        print("Caught keyboard interrupt, exiting")
+    finally:
+        sel.close()
 
-try:
-    while True:
-        events = sel.select(timeout=1)
-        if events:
-            for key, mask in events:
-                service_connection(key, mask)
-        # Check for a socket being monitored to continue.
-        if not sel.get_map():
-            break
-except KeyboardInterrupt:
-    print("Caught keyboard interrupt, exiting")
-finally:
-    sel.close()
+
+app = QGuiApplication()
+
+engine = QQmlApplicationEngine()
+engine.load("gui\client_qml.qml")
+
+ponte = Ponte()
+context = engine.rootContext()
+context.setContextProperty("ponte", ponte)
+
+app.exec()
+

@@ -122,8 +122,8 @@ if len(sys.argv) != 3:
 host, port = sys.argv[1], int(sys.argv[2])
 # Abre o socket
 lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#connections = Connections(ip=host, port=port)
- # Associando o socket a uma interface específica
+# connections = Connections(ip=host, port=port)
+# Associando o socket a uma interface específica
 lsock.bind((host, port))
 lsock.listen()
 print(f"Listening on {(host, port)}")

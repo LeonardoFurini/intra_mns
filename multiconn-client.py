@@ -24,9 +24,10 @@ class KeyboardThread(threading.Thread):
 showcounter = 0 #something to demonstrate the change
 
 def my_callback(inp):
+    users_to_send = inp.split(";")
     txt_to_send = input('Digite a mensagem:')
     sock = key.fileobj
-    req = ConnParser.create_request(operation=Operations.send_message, users=[inp], payload=txt_to_send, origin=name_user)
+    req = ConnParser.create_request(operation=Operations.send_message, users=users_to_send, payload=txt_to_send, origin=name_user)
     sock.send(str.encode(req))
 
 #start the Keyboard thread
@@ -77,6 +78,7 @@ def service_connection(key, mask):
             elif rec['operation'] == Operations.new_user.value:
                 print(f"O usuário {rec['users'][0]} está online!")
                 online_user_name.append(rec['users'][0])
+            print("Digite os usuários que quer enviar: ")
 
             data.recv_total += len(recv_data)
         if not recv_data or data.recv_total == data.msg_total:
@@ -94,13 +96,13 @@ def service_connection(key, mask):
             data.outb = data.outb[sent:]
 
 
-#if len(sys.argv) != 4:
-#    print(f"Usage: {sys.argv[0]} <host> <port> <num_connections>")
-#    sys.exit(1)
+if len(sys.argv) != 3:
+    print(f"Usage: {sys.argv[0]} <host> <port>")
+    sys.exit(1)
 
-host = "127.0.0.1"
-port = 65432
-name_user = names.get_first_name()
+host = sys.argv[1]
+port = int(sys.argv[2])
+name_user = input("Digite seu usuario:")
 start_connections(host, int(port), name_user)
 
 try:

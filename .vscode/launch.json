@@ -5,19 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Cliente",
-            "type": "python",
-            "request": "launch",
-            "program": "client.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
             "name": "multiconn-client",
             "type": "python",
             "request": "launch",
             "program": "multiconn-client.py",
             "console": "integratedTerminal",
+            "args": ["127.0.0.1", "65432"],
             "justMyCode": true
         },
         {
@@ -29,21 +22,5 @@
             "justMyCode": true,
             "args": ["127.0.0.1", "65432"]
         },
-        {
-            "name": "Server Simple",
-            "type": "python",
-            "request": "launch",
-            "program": "simple/server_simple.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-        },
-        {
-            "name": "Client Simple",
-            "type": "python",
-            "request": "launch",
-            "program": "simple/cliente_simple.py",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-        }
     ]
 }
